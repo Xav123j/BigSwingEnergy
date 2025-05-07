@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+/* Add any global styles here */
+body {
+  background-color: theme('colors.brand.black');
+  color: theme('colors.brand.champagne');
+  font-family: theme('fontFamily.sans');
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: theme('fontFamily.serif');
+}
+
+/* Basic focus ring visibility for a11y */
+*:focus-visible {
+  outline: 2px solid theme('colors.brand.gold');
+  outline-offset: 2px;
+}
+
+/* Custom utility for hiding scrollbar */
+@layer utilities {
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;             /* Chrome, Safari, Opera */
+  }
+
+  /* Prevent video flickering during animations */
+  .video-render-fix {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform, opacity;
+  }
+} 
+
+.mb-6 {
+  margin-bottom: 1rem;
+}
