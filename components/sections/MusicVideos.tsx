@@ -13,6 +13,7 @@ export interface MusicVideo {
   title: string;
   videoSrc: string;      // Path to .mp4 in /public/videos/
   thumbnailSrc: string;  // Path to poster image
+  youtubeEmbedSrc?: string; // Optional YouTube embed URL
 }
 
 const musicVideoData: MusicVideo[] = [
@@ -21,60 +22,70 @@ const musicVideoData: MusicVideo[] = [
     title: 'I LOVE HER SO',
     videoSrc: '/videos/I LOVER HER SO .mp4',
     thumbnailSrc: '/videos/posters/I LOVER HER SO -poster.jpg',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/jemPc5MQvqc?si=LTTiTWrGmseNbw9l'
   },
   {
     id: 'letItBe',
     title: 'LET IT BE',
     videoSrc: '/videos/LET IT BE.mp4',
     thumbnailSrc: '/videos/posters/LET IT BE-poster.jpg',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/K1kVGz5XOhs?si=wsbjWjGaxDNvZaiG'
   },
   {
     id: 'letItSnow',
     title: 'LET IT SNOW',
     videoSrc: '/videos/LET IT SNOW.mp4',
     thumbnailSrc: '/videos/posters/LET IT SNOW-poster.jpg',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/LP2ewrEjUHw?si=sSgyvQXJ-C3K0Y87'
   },
   {
     id: 'love',
     title: 'LOVE',
     videoSrc: '/videos/LOVE.mp4',
     thumbnailSrc: '/videos/posters/LOVE-poster.jpg',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/FryO5rDu6eA?si=tXZ_zl6PpVDlCa8O'
   },
   {
     id: 'makeMyDreams',
     title: 'MAKE MY DREAMS',
     videoSrc: '/videos/MAKE MY DREAMS .mp4',
     thumbnailSrc: '/videos/posters/MAKE MY DREAMS -poster.jpg',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/NDif-Vck58E?si=uvHyndX_TyzrMOLN'
   },
   {
     id: 'rockingCrimbo',
     title: 'ROCKING CRIMBO TREE',
     videoSrc: '/videos/ROCKING CRIMBO TREE .mp4',
     thumbnailSrc: '/videos/posters/ROCKING CRIMBO TREE -poster.jpg',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/LXk3Vd9MzSY?si=CJjahuaKs_G5nMZM'
   },
   {
     id: 'ruleTheWorld',
     title: 'RULE THE WORLD',
     videoSrc: '/videos/RULE THE WORLD .mp4',
     thumbnailSrc: '/videos/posters/RULE THE WORLD -poster.jpg',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/epc2SRRnW2g?si=MVJg-HAuKdDbpyUG'
   },
   {
     id: 'sway',
     title: 'SWAY',
     videoSrc: '/videos/SWAY.mp4',
     thumbnailSrc: '/videos/posters/SWAY-poster.jpg',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/Cd6NCDlybtE?si=wqayLGPk-5vfFCQp'
   },
   {
     id: 'sweetItIs',
     title: 'SWEET IT IS',
     videoSrc: '/videos/SWEET IT IS.mp4',
     thumbnailSrc: '/videos/posters/SWEET IT IS-poster.jpg',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/wFBPzsy0_ac?si=tdDXQ5-JX7kQ7lPW'
   },
   {
     id: 'theseAreTheDays',
     title: 'THESE ARE THE DAYS',
     videoSrc: '/videos/THESE ARE THE DAYS .mp4',
     thumbnailSrc: '/videos/posters/THESE ARE THE DAYS -poster.jpg',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/KyJoaabwMgw?si=OxnFHQBRBhfN3VoE'
   },
 ];
 
@@ -254,6 +265,7 @@ const MusicVideos: React.FC = () => {
           videoSrc={selectedVideo.videoSrc}
           videoTitle={selectedVideo.title}
           videoPoster={selectedVideo.thumbnailSrc}
+          youtubeEmbedSrc={selectedVideo.youtubeEmbedSrc}
         />
       )}
     </>

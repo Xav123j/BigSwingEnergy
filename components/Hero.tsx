@@ -15,7 +15,7 @@ const Hero: React.FC = () => {
   const prefersReducedMotion = usePrefersReducedMotion();
   const { registerMediaElement, unregisterMediaElement } = useAudioManager();
 
-  const heroVideoSrc = '/videos/hero-compressed-hd.mp4';
+  const heroVideoSrc = '/videos/hero-compressed-hd1.mp4';
   const heroPosterFallbackSrc = '/images/hero-poster.jpg';
 
   useEffect(() => {
@@ -27,7 +27,7 @@ const Hero: React.FC = () => {
     if (videoRef.current) {
       videoRef.current.muted = isMuted;
     }
-  }, [videoRef.current]);
+  }, [isMuted]);
 
   // Register and unregister the video with AudioManager
   useEffect(() => {
@@ -40,13 +40,30 @@ const Hero: React.FC = () => {
     };
   }, [registerMediaElement, unregisterMediaElement]);
 
-  const showVideo = !prefersReducedMotion;
+  // Always show video regardless of reduced motion preference
+  const showVideo = true;
+
+  // Add explicit play attempt for the video
+  useEffect(() => {
+    if (videoRef.current) {
+      // Try to play the video
+      videoRef.current.play().catch(error => {
+        console.warn("Autoplay was prevented:", error);
+        // Still show the video even if autoplay fails
+        setVideoIsReady(true);
+      });
+    }
+  }, [videoRef.current]);
 
   // Add a backup timeout to ensure video becomes visible
   useEffect(() => {
     if (!videoIsReady && showVideo) {
       const timer = setTimeout(() => {
         setVideoIsReady(true);
+        // Try to play again after delay
+        if (videoRef.current) {
+          videoRef.current.play().catch(e => console.warn("Delayed play failed:", e));
+        }
       }, 500); // Force video to show after 500ms instead of 3000ms
       return () => clearTimeout(timer);
     }
@@ -55,6 +72,10 @@ const Hero: React.FC = () => {
   const handleVideoReady = () => {
     // Immediately set video as ready
     setVideoIsReady(true);
+    // Try to play when ready
+    if (videoRef.current) {
+      videoRef.current.play().catch(e => console.warn("Ready play failed:", e));
+    }
   };
   
   const toggleMute = () => {

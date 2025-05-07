@@ -14,6 +14,7 @@ interface VideoModalProps {
   videoSrc: string;
   videoTitle: string;
   videoPoster?: string;
+  youtubeEmbedSrc?: string; // Optional YouTube embed URL
 }
 
 // Dynamically imported components module store
@@ -21,7 +22,7 @@ let HUIDialog: typeof HeadlessUIDialog | null = null;
 let FMMotion: typeof FramerMotionMotion | null = null;
 let FMAnimatePresence: typeof FramerMotionAnimatePresence | null = null;
 
-const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoSrc, videoTitle, videoPoster }) => {
+const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoSrc, videoTitle, videoPoster, youtubeEmbedSrc }) => {
   const [librariesLoaded, setLibrariesLoaded] = useState(false);
   const [localIsOpen, setLocalIsOpen] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
@@ -69,7 +70,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoSrc, vide
   useEffect(() => {
     let currentVideoElement = videoRef.current;
 
-    if (localIsOpen && currentVideoElement) {
+    if (localIsOpen && currentVideoElement && !youtubeEmbedSrc) {
       const playVideo = () => {
         if (currentVideoElement && !prefersReducedMotion && !saveData) {
           currentVideoElement.play().catch(e => console.warn("Video autoplay warning:", e));
@@ -81,6 +82,9 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoSrc, vide
         playVideo();
       }
       audioManager.fadeOutAllExcept(videoId); 
+    } else if (localIsOpen && youtubeEmbedSrc) {
+      // For YouTube videos, just fade out other audio
+      audioManager.fadeOutAllExcept(videoId);
     }
     
     return () => {
@@ -90,13 +94,12 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoSrc, vide
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localIsOpen, videoId, prefersReducedMotion, saveData]);
+  }, [localIsOpen, videoId, prefersReducedMotion, saveData, youtubeEmbedSrc]);
 
   const handleClose = () => {
     console.log("Modal close triggered - starting exit animation");
     
     // Pause the video immediately when starting to close
-    // This may help prevent flickering from video playback
     if (videoRef.current) {
       videoRef.current.pause();
     }
@@ -156,7 +159,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoSrc, vide
       
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
         <motion.div
-          key={videoSrc}
+          key={youtubeEmbedSrc || videoSrc}
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={isExiting ? {
             opacity: 0,
@@ -196,7 +199,26 @@ const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoSrc, vide
               </button>
             </div>
             <div className="w-full h-full bg-black flex-1 flex items-center justify-center overflow-hidden video-render-fix">
-              {videoSrc && (
+              {youtubeEmbedSrc ? (
+                <div className="w-full h-full flex items-center justify-center video-render-fix" style={{ maxWidth: '1280px', maxHeight: '80vh' }}>
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src={youtubeEmbedSrc + (youtubeEmbedSrc.includes('?') ? '&' : '?') + 'autoplay=1&mute=0'}
+                    title={videoTitle}
+                    frameBorder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    referrerPolicy="strict-origin-when-cross-origin" 
+                    allowFullScreen
+                    className={`aspect-video transition-opacity duration-300 ${isExiting ? 'opacity-30' : 'opacity-100'}`}
+                    style={{ maxHeight: '80vh' }}
+                    onLoad={() => {
+                      // For YouTube videos, fade out other audio
+                      audioManager.fadeOutAllExcept(videoId);
+                    }}
+                  ></iframe>
+                </div>
+              ) : videoSrc && (
                  <video
                     ref={videoRef}
                     src={videoSrc}
