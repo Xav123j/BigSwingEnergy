@@ -5,9 +5,12 @@ import { useForm, Controller, ControllerRenderProps, Control } from 'react-hook-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Listbox, Transition } from '@headlessui/react';
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/24/solid';
+import { CheckIcon, ChevronUpDownIcon, CalendarIcon } from '@heroicons/react/24/solid';
 import Toast from '@/components/ui/Toast';
 import { useToast } from '@/hooks/useToast';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import '@/styles/datepicker.css'; // Custom DatePicker styles
 
 const eventTypes = [
   "Wedding",
@@ -26,7 +29,7 @@ const contactFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   phone: z.string().regex(phoneRegex, { message: "Please enter a valid phone number (E.164 format)" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
-  eventDate: z.string().min(1, { message: "Please select an event date" }),
+  eventDate: z.date({ message: "Please select a valid event date" }),
   eventLocation: z.string().min(1, { message: "Please enter the event location" }),
   eventType: z.string().min(1, { message: "Please select the type of event" }),
   message: z.string().min(10, { message: "Message must be at least 10 characters" })
@@ -51,7 +54,7 @@ const EnquiryForm: React.FC = () => {
       name: '',
       phone: '',
       email: '',
-      eventDate: '',
+      eventDate: undefined,
       eventLocation: '',
       eventType: '',
       message: ''
@@ -179,16 +182,44 @@ const EnquiryForm: React.FC = () => {
             <label htmlFor="eventDate" className="block font-sans uppercase tracking-wide text-xs text-brand-champagne mb-1">
               Event Date*
             </label>
-            <input
-              id="eventDate"
-              type="date"
-              {...register('eventDate')}
-              aria-invalid={!!errors.eventDate}
-              aria-describedby={errors.eventDate ? "eventDate-error" : undefined}
-              className={`w-full rounded-lg px-3 py-2 bg-brand-midnight/20 border 
-                          ${errors.eventDate ? 'border-red-500' : 'border-brand-champagne/30'} 
-                          text-brand-champagne placeholder-brand-champagne/50 focus:outline-none 
-                          focus:ring-2 focus:ring-brand-gold/70 text-sm`}
+            <Controller
+              name="eventDate"
+              control={control}
+              render={({ field }) => (
+                <div className="relative">
+                  <DatePicker
+                    id="eventDate"
+                    selected={field.value}
+                    onChange={(date) => field.onChange(date)}
+                    dateFormat="dd/MM/yyyy"
+                    className={`w-full rounded-lg px-3 py-2 bg-brand-midnight/20 border 
+                              ${errors.eventDate ? 'border-red-500' : 'border-brand-champagne/30'} 
+                              text-brand-champagne placeholder-brand-champagne/50 focus:outline-none 
+                              focus:ring-2 focus:ring-brand-gold/70 text-sm`}
+                    placeholderText="Select event date"
+                    aria-invalid={!!errors.eventDate}
+                    aria-describedby={errors.eventDate ? "eventDate-error" : undefined}
+                    minDate={new Date()}
+                    showPopperArrow={false}
+                    popperClassName="datepicker-popper"
+                    calendarClassName="bg-brand-midnight-blue border border-brand-gold rounded-md shadow-lg"
+                    dayClassName={date => 
+                      "text-brand-champagne hover:bg-brand-gold/20 rounded"
+                    }
+                    monthClassName={() => "text-brand-champagne"} 
+                    weekDayClassName={() => "text-brand-gold"}
+                    todayButton="Today"
+                    calendarContainer={({ className, children }) => (
+                      <div className={`${className} !bg-brand-midnight-blue`} style={{ color: 'var(--brand-champagne)' }}>
+                        {children}
+                      </div>
+                    )}
+                  />
+                  <div className="absolute top-1/2 -translate-y-1/2 right-3 pointer-events-none text-brand-champagne/70">
+                    <CalendarIcon className="h-4 w-4" />
+                  </div>
+                </div>
+              )}
             />
             {errors.eventDate && (
               <p id="eventDate-error" className="mt-0.5 text-xs text-brand-champagne">

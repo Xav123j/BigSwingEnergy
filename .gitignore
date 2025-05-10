@@ -50,4 +50,4 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
-*.sw? 
+*.sw? .env.local

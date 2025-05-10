@@ -6,6 +6,7 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  touch-action: manipulation; /* Prevents double-tap zoom on mobile */
 }
 
 /* Add any global styles here */
@@ -13,6 +14,10 @@ body {
   background-color: theme('colors.brand.black');
   color: theme('colors.brand.champagne');
   font-family: theme('fontFamily.sans');
+  -webkit-tap-highlight-color: transparent; /* Removes tap highlight on mobile */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -23,6 +28,13 @@ h1, h2, h3, h4, h5, h6 {
 *:focus-visible {
   outline: 2px solid theme('colors.brand.gold');
   outline-offset: 2px;
+}
+
+/* Adjust the bottom padding to account for the fixed CTA bar on mobile */
+@media (max-width: 768px) {
+  main {
+    padding-bottom: 5rem; /* Space for the bottom CTA bar */
+  }
 }
 
 /* Custom utility for hiding scrollbar */
@@ -42,8 +54,34 @@ h1, h2, h3, h4, h5, h6 {
     -webkit-backface-visibility: hidden;
     will-change: transform, opacity;
   }
+  
+  /* Better touch targets for mobile */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent text from overflowing on small screens */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Horizontal scroll snap container */
+  .scroll-snap-x {
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none; /* For Firefox */
+  }
+  
+  /* Scroll snap items */
+  .scroll-snap-center {
+    scroll-snap-align: center;
+  }
 } 
 
 .mb-6 {
   margin-bottom: 1rem;
+}
+.react-datepicker__input-container input {
+  width: 100%;
 }

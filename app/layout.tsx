@@ -4,25 +4,29 @@ import './globals.css';
 import NavBar from '@/components/NavBar';
 import React from 'react';
 import { AudioManagerProvider } from '@/context/AudioManager';
+// import { getPublicUrlBase } from '@/lib/utils';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const playfairDisplay = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair-display' });
 
 const siteName = 'Big Swing Energy';
-const description = 'Book the finest jazz quartet for your elegant events. Experience unforgettable melodies and soulful rhythms.';
-const siteUrl = 'https://www.yourjazzquartetsite.com'; // Replace with your actual domain
+const description = 'Quiet swagger, classics re-spun — pure Big Swing Energy';
+// const productionBaseUrl = getPublicUrlBase();
+
+const siteUrl = process.env.NODE_ENV === 'production' ? 'https://bigswingenergy.com' : 'http://localhost:3000';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: siteName,
     template: `%s | ${siteName}`,
   },
   description: description,
   viewport: 'width=device-width, initial-scale=1',
-  manifest: '/site.webmanifest', // Assuming you'll add a webmanifest
+  // manifest: `${productionBaseUrl}/site.webmanifest`,
   icons: {
     icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png', // Assuming you'll add these
+    apple: '/apple-touch-icon.png',
   },
   openGraph: {
     title: siteName,
@@ -31,10 +35,10 @@ export const metadata: Metadata = {
     siteName: siteName,
     images: [
       {
-        url: `${siteUrl}/images/opengraph-image.jpg`, // Replace with your actual OG image URL
-        width: 1200,
-        height: 630,
-        alt: `Logo for ${siteName}`,
+        url: `${siteUrl}/images/BSE_LOGO_CIRCULAR.png`,
+        width: 1024,
+        height: 1024,
+        alt: `Big Swing Energy`,
       },
     ],
     locale: 'en_US',
@@ -44,9 +48,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: siteName,
     description: description,
-    // site: '@yourtwitterhandle', // Optional: add your Twitter handle
-    // creator: '@creatorhandle', // Optional: add creator Twitter handle
-    images: [`${siteUrl}/images/opengraph-image.jpg`], // Replace with your actual OG image URL
+    images: [`${siteUrl}/images/BSE_LOGO_CIRCULAR.png`],
   },
   robots: {
     index: true,
@@ -59,9 +61,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  // verification: { // Optional: add verification for Google Search Console, etc.
-  //   google: 'your-google-site-verification-code',
-  // },
   alternates: {
     canonical: siteUrl,
   }

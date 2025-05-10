@@ -1,7 +1,7 @@
 import React from 'react';
 import SectionWrapper from '@/components/SectionWrapper';
-// import Image from 'next/image'; 
-// import storyPlaceholder from '@/public/images/story-placeholder.jpg';
+import Image from 'next/image'; 
+import storyPlaceholder from '@/public/images/BSE_LOGO_Horizontal3.png';
 
 const StorySection: React.FC = () => {
   return (
@@ -32,7 +32,7 @@ const StorySection: React.FC = () => {
           </div>
         </div>
         <div className="order-1 md:order-2 h-full min-h-[300px] md:min-h-[400px] max-h-[500px] md:max-h-[600px] w-full relative bg-brand-champagne/10 rounded-lg shadow-2xl flex items-center justify-center">
-          {/* <Image 
+          <Image 
             src={storyPlaceholder}
             alt="Jazz quartet performing live"
             layout="fill"
@@ -40,8 +40,7 @@ const StorySection: React.FC = () => {
             className="rounded-lg shadow-2xl"
             placeholder="blur"
             priority
-          /> */}
-          <p className="text-brand-champagne/50 font-sans">Image Placeholder (story-placeholder.jpg)</p>
+          />
         </div>
       </div>
     </SectionWrapper>

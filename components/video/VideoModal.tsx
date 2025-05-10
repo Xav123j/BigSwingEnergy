@@ -1,256 +1,267 @@
 'use client';
 
-import React, { Fragment, useEffect, useRef, useState } from 'react';
-import type { Dialog as HeadlessUIDialog } from '@headlessui/react';
-import type { motion as FramerMotionMotion, AnimatePresence as FramerMotionAnimatePresence } from 'framer-motion';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import React, { Fragment, useRef, useEffect, useState } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
+import { useVideoContext } from '@/context/VideoContext';
+import CTAButton from '@/components/CTAButton';
 import { useAudioManager } from '@/context/AudioManager';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { useSaveData } from '@/hooks/useSaveData';
 
-interface VideoModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  videoSrc: string;
-  videoTitle: string;
-  videoPoster?: string;
-  youtubeEmbedSrc?: string; // Optional YouTube embed URL
-}
-
-// Dynamically imported components module store
-let HUIDialog: typeof HeadlessUIDialog | null = null;
-let FMMotion: typeof FramerMotionMotion | null = null;
-let FMAnimatePresence: typeof FramerMotionAnimatePresence | null = null;
-
-const VideoModal: React.FC<VideoModalProps> = ({ isOpen, onClose, videoSrc, videoTitle, videoPoster, youtubeEmbedSrc }) => {
-  const [librariesLoaded, setLibrariesLoaded] = useState(false);
-  const [localIsOpen, setLocalIsOpen] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
+const VideoModal: React.FC = () => {
+  const { isModalOpen, setIsModalOpen, getCurrentVideo } = useVideoContext();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const initialFocusRef = useRef(null);
-  const audioManager = useAudioManager();
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const saveData = useSaveData();
+  const currentVideo = getCurrentVideo();
+  const [showCTA, setShowCTA] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const { fadeOutAllExcept, restoreVolume } = useAudioManager();
 
-  // Force enable animations for testing
-  const motionEnabled = true;
-
-  const videoId = `modal-video-${videoTitle.replace(/\s+/g, '-').toLowerCase()}`;
-
-  // Sync external state with local state
+  // Check if device is mobile with more strict criteria
   useEffect(() => {
-    if (isOpen) {
-      setLocalIsOpen(true);
-      setIsExiting(false);
-      // Add overlay class to body to prevent scrolling
-      document.body.classList.add('modal-open');
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    console.log("Loading animation libraries...");
+    const checkMobile = () => {
+      // Check for mobile devices using multiple criteria
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isSmallScreen = window.innerWidth < 768;
+      const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      
+      setIsMobile(isMobileDevice && isSmallScreen && hasTouchScreen);
+    };
     
-    Promise.all([
-      import('@headlessui/react').then(mod => { 
-        console.log("Headless UI loaded");
-        HUIDialog = mod.Dialog; 
-      }),
-      import('framer-motion').then(mod => { 
-        console.log("Framer Motion loaded");
-        FMMotion = mod.motion; 
-        FMAnimatePresence = mod.AnimatePresence; 
-      }),
-    ]).then(() => {
-      console.log("All animation libraries loaded successfully");
-      setLibrariesLoaded(true);
-    })
-    .catch(err => console.error("Failed to load modal libraries", err));
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Handle orientation change and fullscreen on mobile
   useEffect(() => {
-    let currentVideoElement = videoRef.current;
+    // Only proceed if we're on a mobile device and the modal is open
+    if (!isMobile || !isModalOpen) return;
 
-    if (localIsOpen && currentVideoElement && !youtubeEmbedSrc) {
-      const playVideo = () => {
-        if (currentVideoElement && !prefersReducedMotion && !saveData) {
-          currentVideoElement.play().catch(e => console.warn("Video autoplay warning:", e));
+    // Try multiple methods to lock orientation
+    const lockOrientation = async () => {
+      try {
+        // Method 1: Screen Orientation API
+        if (screen.orientation) {
+          await (screen.orientation as any).lock?.('landscape');
         }
-      };
-
-      if (currentVideoElement.readyState >= 3) {
-        audioManager.registerMediaElement(videoId, currentVideoElement);
-        playVideo();
-      }
-      audioManager.fadeOutAllExcept(videoId); 
-    } else if (localIsOpen && youtubeEmbedSrc) {
-      // For YouTube videos, just fade out other audio
-      audioManager.fadeOutAllExcept(videoId);
-    }
-    
-    return () => {
-      if (currentVideoElement) {
-        currentVideoElement.pause();
-        audioManager.unregisterMediaElement(videoId);
+        
+        // Method 2: Legacy orientation lock
+        if ((screen as any).lockOrientation) {
+          (screen as any).lockOrientation('landscape');
+        } else if ((screen as any).mozLockOrientation) {
+          (screen as any).mozLockOrientation('landscape');
+        } else if ((screen as any).msLockOrientation) {
+          (screen as any).msLockOrientation('landscape');
+        }
+      } catch (error) {
+        console.log('Orientation lock not supported:', error);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localIsOpen, videoId, prefersReducedMotion, saveData, youtubeEmbedSrc]);
 
-  const handleClose = () => {
-    console.log("Modal close triggered - starting exit animation");
-    
-    // Pause the video immediately when starting to close
-    if (videoRef.current) {
+    // Try multiple methods to enter fullscreen
+    const enterFullscreen = async () => {
+      const videoContainer = document.querySelector('.video-container');
+      if (!videoContainer) return;
+
+      try {
+        // Method 1: Standard fullscreen API
+        if (videoContainer.requestFullscreen) {
+          await videoContainer.requestFullscreen();
+        }
+        // Method 2: Webkit fullscreen
+        else if ((videoContainer as any).webkitRequestFullscreen) {
+          await (videoContainer as any).webkitRequestFullscreen();
+        }
+        // Method 3: Mozilla fullscreen
+        else if ((videoContainer as any).mozRequestFullScreen) {
+          await (videoContainer as any).mozRequestFullScreen();
+        }
+        // Method 4: MS fullscreen
+        else if ((videoContainer as any).msRequestFullscreen) {
+          await (videoContainer as any).msRequestFullscreen();
+        }
+      } catch (error) {
+        console.log('Fullscreen not supported:', error);
+      }
+    };
+
+    // Execute both functions
+    lockOrientation();
+    enterFullscreen();
+
+    // Cleanup function
+    return () => {
+      // Only cleanup if we're on mobile
+      if (!isMobile) return;
+
+      // Unlock orientation
+      try {
+        if (screen.orientation) {
+          (screen.orientation as any).unlock?.();
+        }
+        if ((screen as any).unlockOrientation) {
+          (screen as any).unlockOrientation();
+        } else if ((screen as any).mozUnlockOrientation) {
+          (screen as any).mozUnlockOrientation();
+        } else if ((screen as any).msUnlockOrientation) {
+          (screen as any).msUnlockOrientation();
+        }
+      } catch (error) {
+        console.log('Orientation unlock failed:', error);
+      }
+
+      // Exit fullscreen
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          (document as any).mozCancelFullScreen();
+        } else if ((document as any).msExitFullscreen) {
+          (document as any).msExitFullscreen();
+        }
+      } catch (error) {
+        console.log('Exit fullscreen failed:', error);
+      }
+    };
+  }, [isModalOpen, isMobile]);
+
+  // Add event listener for orientation change
+  useEffect(() => {
+    // Only add listener if we're on mobile
+    if (!isMobile) return;
+
+    const handleOrientationChange = () => {
+      if (isModalOpen) {
+        // Force landscape if in portrait
+        if (window.orientation === 0 || window.orientation === 180) {
+          // Try to rotate to landscape
+          if (screen.orientation) {
+            (screen.orientation as any).lock?.('landscape').catch(() => {});
+          }
+        }
+      }
+    };
+
+    window.addEventListener('orientationchange', handleOrientationChange);
+    return () => window.removeEventListener('orientationchange', handleOrientationChange);
+  }, [isModalOpen, isMobile]);
+
+  // Handle closing and pausing video
+  useEffect(() => {
+    if (!isModalOpen && videoRef.current) {
       videoRef.current.pause();
     }
     
-    // Start exit animation
-    setIsExiting(true);
+    // When modal closes, restore hero video audio if it's not muted
+    if (!isModalOpen) {
+      // Restore hero video audio - assumes the video ID is 'hero-video' as registered in Hero.tsx
+      restoreVolume('hero-video');
+    }
+  }, [isModalOpen, restoreVolume]);
+
+  // Handle fading out hero video when modal opens
+  useEffect(() => {
+    if (isModalOpen && currentVideo) {
+      // Fade out all other media elements when modal opens
+      fadeOutAllExcept(`modal-video-${currentVideo.id}`);
+    }
+  }, [isModalOpen, currentVideo, fadeOutAllExcept]);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      setShowCTA(false);
+      const timer = setTimeout(() => setShowCTA(true), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isModalOpen]);
+
+  // Early return if no video selected
+  if (!currentVideo) return null;
+
+  // Get the YouTube embed URL with autoplay appended
+  const getYouTubeEmbedUrl = () => {
+    // If no URL is provided, use a fallback
+    if (!currentVideo.youtubeEmbedSrc) {
+      return 'about:blank';
+    }
     
-    // Wait for animation to complete before actually closing
-    setTimeout(() => {
-      console.log("Animation timeout complete - closing modal");
-      
-      const backgroundMediaIds = ['hero-video']; 
-      backgroundMediaIds.forEach(id => {
-        const vol = audioManager.getOriginalVolume(id);
-        if (vol !== undefined) {
-          audioManager.restoreVolume(id);
-        }
-      });
-      
-      audioManager.unregisterMediaElement(videoId);
-      setLocalIsOpen(false);
-      onClose();
-      // Remove overlay class from body to allow scrolling
-      document.body.classList.remove('modal-open');
-    }, 750); // Give a little extra time to ensure animation completes
+    // Extract video ID from URL
+    const videoId = currentVideo.youtubeEmbedSrc.split('/').pop()?.split('?')[0];
+    
+    // Use a direct YouTube embedding URL with additional parameters for mobile
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&enablejsapi=1&rel=0&modestbranding=1&fs=1`;
   };
 
-  if (!librariesLoaded || !HUIDialog || !FMMotion || !FMAnimatePresence) {
-    return null; 
-  }
-
-  const Dialog = HUIDialog;
-  const motion = FMMotion;
-  const AnimatePresence = FMAnimatePresence;
-
-  console.log("Render state:", { localIsOpen, isExiting, isOpen });
-
-  if (!localIsOpen) return null;
-
   return (
-    <Dialog
-      static
-      open={true}
-      onClose={handleClose}
-      initialFocus={initialFocusRef}
-      className="relative z-[100]"
-    >
-      {/* Backdrop with smoother transitions */}
-      <div 
-        className={`fixed inset-0 z-[99] pointer-events-none
-          ${isExiting 
-            ? 'opacity-0 backdrop-blur-[0px]' 
-            : 'opacity-100 backdrop-blur-sm bg-black/80'
-          } transition-opacity transition-[backdrop-filter] duration-700 ease-out`} 
-        aria-hidden="true"
-      />
-      
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
-        <motion.div
-          key={youtubeEmbedSrc || videoSrc}
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={isExiting ? {
-            opacity: 0,
-            scale: 0.8,
-            y: 50,
-            filter: "blur(8px)",
-            transition: {
-              duration: 0.7,
-              ease: [0.32, 0.72, 0, 1]
-            }
-          } : {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            rotate: 0,
-            filter: "blur(0px)",
-            transition: {
-              type: "spring",
-              damping: 25,
-              stiffness: 120
-            }
-          }}
-          className="relative w-full max-w-[90vw] max-h-[90vh] bg-brand-black rounded-lg shadow-2xl overflow-hidden border border-brand-champagne/20 pointer-events-auto video-render-fix"
+    <Transition show={isModalOpen} as={Fragment}>
+      <Dialog 
+        as="div" 
+        className="relative z-50" 
+        onClose={() => setIsModalOpen(false)}
+      >
+        {/* Backdrop with blur effect */}
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
         >
-          <Dialog.Panel as="div" className="flex flex-col h-full">
-            <div className="flex items-center justify-between p-4 border-b border-brand-champagne/10">
-              <Dialog.Title as="h3" className="text-xl font-medium font-serif text-brand-gold">
-                {videoTitle}
-              </Dialog.Title>
-              <button
-                ref={initialFocusRef}
-                onClick={handleClose}
-                className="p-2 rounded-md text-brand-champagne/70 hover:text-brand-gold hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:ring-offset-2 focus-visible:ring-offset-brand-black transition-colors duration-200"
-                aria-label="Close video player"
-              >
-                <XMarkIcon className="h-7 w-7" />
-              </button>
-            </div>
-            <div className="w-full h-full bg-black flex-1 flex items-center justify-center overflow-hidden video-render-fix">
-              {youtubeEmbedSrc ? (
-                <div className="w-full h-full flex items-center justify-center video-render-fix" style={{ maxWidth: '1280px', maxHeight: '80vh' }}>
-                  <iframe 
-                    width="100%" 
-                    height="100%" 
-                    src={youtubeEmbedSrc + (youtubeEmbedSrc.includes('?') ? '&' : '?') + 'autoplay=1&mute=0'}
-                    title={videoTitle}
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                    referrerPolicy="strict-origin-when-cross-origin" 
-                    allowFullScreen
-                    className={`aspect-video transition-opacity duration-300 ${isExiting ? 'opacity-30' : 'opacity-100'}`}
-                    style={{ maxHeight: '80vh' }}
-                    onLoad={() => {
-                      // For YouTube videos, fade out other audio
-                      audioManager.fadeOutAllExcept(videoId);
-                    }}
-                  ></iframe>
-                </div>
-              ) : videoSrc && (
-                 <video
-                    ref={videoRef}
-                    src={videoSrc}
-                    poster={videoPoster}
-                    controls
-                    playsInline
-                    preload="auto"
-                    aria-label={videoTitle}
-                    className={`w-full h-full max-h-[80vh] object-contain transition-opacity duration-300 ${isExiting ? 'opacity-30' : 'opacity-100'} video-render-fix`}
-                    onLoadedData={() => {
-                        const currentVideoElement = videoRef.current;
-                        if (currentVideoElement) {
-                            audioManager.registerMediaElement(videoId, currentVideoElement);
-                            if (!prefersReducedMotion && !saveData) {
-                                currentVideoElement.play().catch(e => console.warn("Video autoplay failed:", e));
-                            }
-                        }
-                    }}
-                    onVolumeChange={() => {
-                        if(videoRef.current) {
-                            audioManager.registerMediaElement(videoId, videoRef.current); 
-                        }
-                    }}
+          <div className="fixed inset-0 bg-brand-midnight-blue/95 backdrop-blur-sm transition-opacity" />
+        </Transition.Child>
+
+        {/* Modal content - full screen with padding */}
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full h-full max-w-full md:max-w-[100vw] lg:max-w-[100vw] max-h-full md:max-h-[100vh] transform overflow-hidden bg-transparent p-0 text-left align-middle transition-all flex flex-col">
+                {/* Video container with border - larger size */}
+                <div className="relative flex-grow w-full h-full flex flex-col">
+                  {/* Exit button absolutely positioned top right */}
+                  <button
+                    type="button"
+                    className="absolute top-0 right-9 rounded-full bg-black hover:bg-brand-gold p-2 text-white hover:text-white border-[2px] border-brand-gold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold z-20"
+                    onClick={() => setIsModalOpen(false)}
+                    aria-label="Close video"
                   >
-                    Your browser does not support the video tag.
-                </video>
-              )}
-            </div>
-          </Dialog.Panel>
-        </motion.div>
-      </div>
-    </Dialog>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  
+                  {/* Video player - takes maximum available space */}
+                  <div className={`video-container w-full ${isMobile ? 'h-screen' : 'max-w-[85vw] aspect-video'} mx-auto ${isMobile ? '' : 'rounded-lg border-[3px] border-brand-gold'} shadow-2xl bg-black overflow-hidden relative`}>
+                    <iframe
+                      src={getYouTubeEmbedUrl()}
+                      title={currentVideo.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                      className="w-full h-full z-10"
+                      allowFullScreen
+                      frameBorder="0"
+                      style={{ margin: 0, padding: 0 }}
+                      onLoad={() => {
+                        // Ensure audio is faded out when iframe loads
+                        fadeOutAllExcept(`modal-video-${currentVideo.id}`);
+                      }}
+                    />
+                  </div>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
   );
 };
 

@@ -4,129 +4,106 @@ import React, { useState, useEffect, useRef } from 'react';
 import Button from './ui/Button';
 import MuteButton from './ui/MuteButton';
 import Image from 'next/image';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useAudioManager } from '@/context/AudioManager';
 
 const Hero: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(true); // Default to muted for autoplay
   const [videoIsReady, setVideoIsReady] = useState(false);
-  const [initialSectionFadeDone, setInitialSectionFadeDone] = useState(false);
-  const prefersReducedMotion = usePrefersReducedMotion();
   const { registerMediaElement, unregisterMediaElement } = useAudioManager();
-
+  
+  // State to determine if we should attempt to show/play video (for SSR and initial load)
+  // We can rely on CSS to hide it initially if needed, or use this state.
+  // For now, let's assume we always try to render the video tag.
+  const [isClient, setIsClient] = useState(false);
+  
   const heroVideoSrc = '/videos/hero-compressed-hd1.mp4';
   const heroPosterFallbackSrc = '/images/hero-poster.jpg';
 
   useEffect(() => {
-    const timer = setTimeout(() => setInitialSectionFadeDone(true), 10);
-    return () => clearTimeout(timer);
+    setIsClient(true); // Set isClient to true once component mounts
   }, []);
 
+  // This useEffect now handles video setup for both mobile and desktop
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.muted = isMuted;
-    }
-  }, [isMuted]);
+    if (!videoRef.current) return;
 
-  // Register and unregister the video with AudioManager
-  useEffect(() => {
-    if (videoRef.current) {
-      registerMediaElement('hero-video', videoRef.current);
+    videoRef.current.muted = isMuted; // Ensure video respects the isMuted state
+    registerMediaElement('hero-video', videoRef.current);
+    
+    // Attempt to play the video
+    const playPromise = videoRef.current.play();
+    if (playPromise !== undefined) {
+      playPromise.then(_ => {
+        // Autoplay started!
+        setVideoIsReady(true);
+        console.log("Hero video autoplay started.");
+      }).catch(error => {
+        // Autoplay was prevented.
+        console.warn('Hero video autoplay was prevented:', error);
+        // Show video poster or a fallback if play fails, videoIsReady can still be true to show the element
+        setVideoIsReady(true); 
+      });
+    } else {
+      // If play() doesn't return a promise (older browsers), assume it worked or will show via attributes
+      setVideoIsReady(true);
     }
     
     return () => {
       unregisterMediaElement('hero-video');
     };
-  }, [registerMediaElement, unregisterMediaElement]);
-
-  // Always show video regardless of reduced motion preference
-  const showVideo = true;
-
-  // Add explicit play attempt for the video
-  useEffect(() => {
+  }, [isMuted, registerMediaElement, unregisterMediaElement, isClient]); // Added isClient to re-run when it becomes true
+  
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
     if (videoRef.current) {
-      // Try to play the video
-      videoRef.current.play().catch(error => {
-        console.warn("Autoplay was prevented:", error);
-        // Still show the video even if autoplay fails
-        setVideoIsReady(true);
-      });
-    }
-  }, [videoRef.current]);
-
-  // Add a backup timeout to ensure video becomes visible
-  useEffect(() => {
-    if (!videoIsReady && showVideo) {
-      const timer = setTimeout(() => {
-        setVideoIsReady(true);
-        // Try to play again after delay
-        if (videoRef.current) {
-          videoRef.current.play().catch(e => console.warn("Delayed play failed:", e));
-        }
-      }, 500); // Force video to show after 500ms instead of 3000ms
-      return () => clearTimeout(timer);
-    }
-  }, [videoIsReady, showVideo]);
-
-  const handleVideoReady = () => {
-    // Immediately set video as ready
-    setVideoIsReady(true);
-    // Try to play when ready
-    if (videoRef.current) {
-      videoRef.current.play().catch(e => console.warn("Ready play failed:", e));
+      videoRef.current.muted = !isMuted; // Directly apply to video element
     }
   };
   
-  const toggleMute = () => {
-    const newMutedState = !isMuted;
-    setIsMuted(newMutedState);
-    if (videoRef.current) {
-      videoRef.current.muted = newMutedState;
-    }
-  };
-
-  const sectionStyle: React.CSSProperties = {
-    backgroundColor: !showVideo ? '#66696f' : '#000000',
-    backgroundImage: !showVideo ? `url(${heroPosterFallbackSrc})` : undefined,
-    backgroundSize: !showVideo ? 'cover' : undefined,
-    backgroundPosition: !showVideo ? 'center' : undefined,
+  // Use a simpler approach for background: video will overlay it.
+  // The poster attribute on the video tag will serve as the initial background.
+  const sectionStyle = {
+    backgroundColor: '#000000', // Base background color
   };
 
   return (
     <section 
-      className={`relative h-screen min-h-[600px] flex items-center justify-center text-center overflow-hidden transition-opacity duration-300 ease-in-out ${initialSectionFadeDone ? 'opacity-100' : 'opacity-0'}`}
+      className="relative h-screen min-h-[500px] sm:min-h-[600px] flex items-center justify-center text-center overflow-hidden"
       style={sectionStyle}
+      id="Hero"
     >
-      {showVideo && (
+      {/* Video is now always rendered, relies on attributes and play() attempt */}
+      {isClient && ( // Only render video tag on the client to avoid hydration mismatches with videoRef
         <video
-          id="hero-video-element"
           ref={videoRef}
           src={heroVideoSrc}
-          className={`absolute top-0 left-0 w-full h-full object-cover z-[1] transition-opacity duration-300 ease-in-out ${videoIsReady ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute top-0 left-0 w-full h-full object-cover z-[1] transition-opacity duration-500 ${videoIsReady ? 'opacity-100' : 'opacity-0'}`}
           autoPlay
           loop
-          muted
-          playsInline
+          muted // Start muted for autoplay to work on mobile
+          playsInline // Essential for mobile autoplay
           preload="auto"
-          poster={heroPosterFallbackSrc}
-          onCanPlay={handleVideoReady}
-          onLoadedData={handleVideoReady}
-          onLoadStart={handleVideoReady}
-          onError={(e) => {
-            console.error('Video error:', e);
-            // Show fallback image by setting videoIsReady to true even when video fails
-            setVideoIsReady(true);
+          poster={heroPosterFallbackSrc} // Shows while video loads or if it fails
+          onLoadedData={() => {
+            // setVideoIsReady(true); // Play attempt in useEffect will set this
+            console.log("Hero video onLoadedData triggered");
+          }}
+          onCanPlay={() => {
+             console.log("Hero video onCanPlay triggered, attempting play if not already.");
+             if (videoRef.current && videoRef.current.paused && !videoIsReady) {
+                // Fallback play attempt if initial one in useEffect was too early
+                videoRef.current.play().then(() => setVideoIsReady(true)).catch(e => console.warn("onCanPlay play() failed", e));
+             }
           }}
         />
       )}
       
-      <div className={`absolute inset-0 bg-black z-[2] transition-opacity duration-500 ease-in-out 
-        ${showVideo && videoIsReady ? 'opacity-30' : 
-         (showVideo && !videoIsReady ? 'opacity-0' : 'opacity-40')}
-      `}></div>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black z-[2] opacity-15"></div>
       
-      <div className="relative z-[3] p-1 md:p-4 flex flex-col items-center justify-center w-full max-w-3xl opacity-100 margin-bottom: -5px mt-16">
+      {/* Content */}
+      <div className="relative z-[3] p-1 md:p-4 flex flex-col items-center justify-center w-full max-w-3xl mt-8 md:mt-16 px-4 sm:px-6">
         <div className="w-full flex justify-center mb-0">
           <Image
             src="/images/image_logo.png"
@@ -134,16 +111,17 @@ const Hero: React.FC = () => {
             width={800}
             height={300}
             priority
-            className="w-auto h-auto max-h-[200px] md:max-h-[250px] lg:max-h-[300px]"
+            className="w-auto h-auto max-h-[130px] sm:max-h-[200px] md:max-h-[250px] lg:max-h-[300px]"
           />
         </div>
 
-        <p className="text-base sm:text-lg md:text-xl text-brand-champagne mb-6 max-w-xl md:max-w-2xl mx-auto">
-        Quiet swagger, classics re-spun — pure Big Swing Energy.
+        <p className="text-base sm:text-lg md:text-xl leading-normal text-brand-champagne mb-6 max-w-xl md:max-w-2xl mx-auto text-center sm:whitespace-nowrap">
+          Quiet swagger, classics re-spun
+          <span className="block sm:inline"> — pure Big Swing Energy.</span>
         </p>
         <Button 
           variant="primary" 
-          className="text-base px-8 py-3 md:text-lg md:px-10 md:py-4"
+          className="text-base px-6 py-3 md:text-lg md:px-10 md:py-4"
           onClick={() => {
             const contactSection = document.getElementById('contact');
             if (contactSection) contactSection.scrollIntoView({ behavior: 'smooth' });
@@ -153,11 +131,13 @@ const Hero: React.FC = () => {
         </Button>
       </div>
 
-      {showVideo && (
+      {/* Mute button can be shown on both mobile and desktop if desired, or kept desktop only */}
+      {/* For now, let's assume videoIsReady implies we can show mute button */}
+      {videoIsReady && (
         <MuteButton 
           isMuted={isMuted}
           toggleMute={toggleMute} 
-          className="fixed z-50 bottom-4 left-6"
+          className="fixed z-50 bottom-20 md:bottom-4 left-4 md:left-6"
         />
       )}
     </section>

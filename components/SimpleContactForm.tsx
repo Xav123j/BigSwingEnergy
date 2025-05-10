@@ -6,6 +6,9 @@ import { Transition } from '@headlessui/react';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/24/solid';
 import { z, ZodError, ZodIssue } from 'zod';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import '@/styles/datepicker.css'; // Custom DatePicker styles
 
 const eventTypes = [
   "Wedding",
@@ -21,7 +24,7 @@ const eventTypes = [
 const ContactFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
-  eventDate: z.string().min(1, { message: 'Please select an event date.' }),
+  eventDate: z.date({ message: 'Please select an event date.' }),
   eventType: z.string().min(1, { message: 'Please select the type of event.' }),
   message: z.string().min(10, { message: 'Message must be at least 10 characters.' }),
 });
@@ -36,10 +39,10 @@ interface ToastState {
 }
 
 const SimpleContactForm: React.FC = () => {
-  const [formData, setFormData] = useState<ContactFormData>({
+  const [formData, setFormData] = useState<Omit<ContactFormData, 'eventDate'> & { eventDate: Date | null }>({
     name: '',
     email: '',
-    eventDate: '',
+    eventDate: null,
     eventType: '',
     message: '',
   });
@@ -50,7 +53,7 @@ const SimpleContactForm: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prevState: ContactFormData) => ({
+    setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
@@ -69,12 +72,37 @@ const SimpleContactForm: React.FC = () => {
     }
   };
 
+  const handleDateChange = (date: Date | null) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      eventDate: date,
+    }));
+    if (errors.eventDate) {
+      setErrors((prevErrors) => ({ ...prevErrors, eventDate: undefined }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log('Simple form submission started');
     setErrors({});
 
-    const validationResult = ContactFormSchema.safeParse(formData);
+    // Make sure eventDate is not null before validation
+    if (!formData.eventDate) {
+      setErrors((prevErrors) => ({ 
+        ...prevErrors, 
+        eventDate: 'Please select an event date.' 
+      }));
+      return;
+    }
+
+    const validationResult = ContactFormSchema.safeParse({
+      ...formData,
+      eventDate: formData.eventDate
+    });
+
     if (!validationResult.success) {
+      console.log('Form validation failed:', validationResult.error.errors);
       const fieldErrors: FormErrors = {};
       (validationResult.error as ZodError).errors.forEach((err: ZodIssue) => {
         if (err.path[0]) {
@@ -85,9 +113,15 @@ const SimpleContactForm: React.FC = () => {
       return;
     }
 
+    console.log('Form data validated successfully:', validationResult.data);
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/contact', {
+      console.log('Sending form data to API...');
+      // Use Firebase Function URL instead of Next.js API route
+      const apiUrl = 'https://us-central1-bigswingenergy-6630a.cloudfunctions.net/contactForm';
+      console.log('Using API URL:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,25 +129,44 @@ const SimpleContactForm: React.FC = () => {
         body: JSON.stringify(validationResult.data),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Something went wrong');
+      console.log('API response status:', response.status);
+      
+      // Check response type and handle non-JSON responses
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("Received non-JSON response:", await response.text());
+        throw new Error("Server returned non-JSON response. Check server logs.");
       }
       
+      const responseData = await response.json();
+      console.log('API response data:', responseData);
+
+      if (!response.ok) {
+        console.error('API error response:', responseData);
+        throw new Error(responseData.message || 'Something went wrong');
+      }
+      
+      console.log('Form submission successful:', responseData);
       setToast({ show: true, message: 'Message sent successfully! We will be in touch soon.', type: 'success' });
-      setFormData({ name: '', email: '', eventDate: '', eventType: '', message: '' });
+      setFormData({ name: '', email: '', eventDate: null, eventType: '', message: '' });
       setErrors({});
     } catch (error: any) {
-      console.error('Submission Error:', error);
+      console.error('Form submission error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       setToast({ show: true, message: error.message || 'Failed to send message. Please try again.', type: 'error' });
     } finally {
       setIsSubmitting(false);
+      console.log('Form submission process completed');
     }
   };
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="w-full max-w-lg mx-auto space-y-6 text-left">
+      <form onSubmit={handleSubmit} className="w-full max-w-lg mx-auto space-y-5 sm:space-y-6 text-left">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-brand-champagne mb-1">
             Full Name
@@ -126,8 +179,9 @@ const SimpleContactForm: React.FC = () => {
             onChange={handleChange}
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? "name-error" : undefined}
-            className={`mt-1 block w-full px-3 py-2 bg-white/5 border border-brand-champagne/30 rounded-md shadow-sm text-brand-champagne placeholder-brand-champagne/60 focus:outline-none focus:ring-2 sm:text-sm
-                        ${errors.name ? 'border-red-500 ring-red-500' : 'focus:ring-brand-gold focus:border-brand-gold'}`}
+            className={`mt-1 block w-full px-3 py-3 sm:py-2 bg-white/5 border border-brand-champagne/30 rounded-md shadow-sm text-brand-champagne placeholder-brand-champagne/60 focus:outline-none focus:ring-2 sm:text-sm touch-target ${
+              errors.name ? 'border-red-500 ring-red-500' : 'focus:ring-brand-gold focus:border-brand-gold'
+            }`}
             placeholder="Your Name"
           />
           {errors.name && <p id="name-error" className="mt-1 text-xs text-red-400">{errors.name}</p>}
@@ -144,30 +198,49 @@ const SimpleContactForm: React.FC = () => {
             onChange={handleChange}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "email-error" : undefined}
-            className={`mt-1 block w-full px-3 py-2 bg-white/5 border border-brand-champagne/30 rounded-md shadow-sm text-brand-champagne placeholder-brand-champagne/60 focus:outline-none focus:ring-2 sm:text-sm
-                        ${errors.email ? 'border-red-500 ring-red-500' : 'focus:ring-brand-gold focus:border-brand-gold'}`}
+            className={`mt-1 block w-full px-3 py-3 sm:py-2 bg-white/5 border border-brand-champagne/30 rounded-md shadow-sm text-brand-champagne placeholder-brand-champagne/60 focus:outline-none focus:ring-2 sm:text-sm touch-target ${
+              errors.email ? 'border-red-500 ring-red-500' : 'focus:ring-brand-gold focus:border-brand-gold'
+            }`}
             placeholder="you@example.com"
           />
           {errors.email && <p id="email-error" className="mt-1 text-xs text-red-400">{errors.email}</p>}
         </div>
         
         {/* Event date and event type in the same row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="eventDate" className="block text-sm font-medium text-brand-champagne mb-1">
               Event Date*
             </label>
-            <input
-              type="date"
-              name="eventDate"
-              id="eventDate"
-              value={formData.eventDate}
-              onChange={handleChange}
-              aria-invalid={!!errors.eventDate}
-              aria-describedby={errors.eventDate ? "eventDate-error" : undefined}
-              className={`mt-1 block w-full px-3 py-2 bg-white/5 border border-brand-champagne/30 rounded-md shadow-sm text-brand-champagne placeholder-brand-champagne/60 focus:outline-none focus:ring-2 sm:text-sm
-                          ${errors.eventDate ? 'border-red-500 ring-red-500' : 'focus:ring-brand-gold focus:border-brand-gold'}`}
-            />
+            <div className="relative mt-1">
+              <DatePicker
+                id="eventDate"
+                selected={formData.eventDate}
+                onChange={handleDateChange}
+                dateFormat="dd/MM/yyyy"
+                className={`block w-full px-3 py-3 sm:py-2 bg-white/5 border border-brand-champagne/30 rounded-md shadow-sm text-brand-champagne placeholder-brand-champagne/60 focus:outline-none focus:ring-2 sm:text-sm touch-target ${
+                  errors.eventDate ? 'border-red-500 ring-red-500' : 'focus:ring-brand-gold focus:border-brand-gold'
+                }`}
+                placeholderText="Select event date"
+                aria-invalid={!!errors.eventDate}
+                aria-describedby={errors.eventDate ? "eventDate-error" : undefined}
+                minDate={new Date()}
+                showPopperArrow={false}
+                popperClassName="datepicker-popper"
+                calendarClassName="bg-brand-midnight-blue border border-brand-gold rounded-md shadow-lg"
+                dayClassName={date => 
+                  "text-brand-champagne hover:bg-brand-gold/20 rounded"
+                }
+                monthClassName={() => "text-brand-champagne"} 
+                weekDayClassName={() => "text-brand-gold"}
+                todayButton="Today"
+                calendarContainer={({ className, children }) => (
+                  <div className={`${className} !bg-brand-midnight-blue`} style={{ color: 'var(--brand-champagne)' }}>
+                    {children}
+                  </div>
+                )}
+              />
+            </div>
             {errors.eventDate && <p id="eventDate-error" className="mt-1 text-xs text-red-400">{errors.eventDate}</p>}
           </div>
           
@@ -182,8 +255,9 @@ const SimpleContactForm: React.FC = () => {
                 aria-invalid={!!errors.eventType}
                 aria-describedby={errors.eventType ? "eventType-error" : undefined}
                 onClick={() => setEventTypeOpen(!eventTypeOpen)}
-                className={`relative w-full px-3 py-2 bg-white/5 border border-brand-champagne/30 rounded-md shadow-sm text-left text-brand-champagne placeholder-brand-champagne/60 focus:outline-none focus:ring-2 sm:text-sm
-                         ${errors.eventType ? 'border-red-500 ring-red-500' : 'focus:ring-brand-gold focus:border-brand-gold'}`}
+                className={`relative w-full px-3 py-3 sm:py-2 bg-white/5 border border-brand-champagne/30 rounded-md shadow-sm text-left text-brand-champagne placeholder-brand-champagne/60 focus:outline-none focus:ring-2 sm:text-sm touch-target ${
+                  errors.eventType ? 'border-red-500 ring-red-500' : 'focus:ring-brand-gold focus:border-brand-gold'
+                }`}
               >
                 <span className={`block truncate ${!formData.eventType ? 'text-brand-champagne/50' : ''}`}>
                   {formData.eventType || 'Select an option'}
@@ -192,14 +266,13 @@ const SimpleContactForm: React.FC = () => {
                   <ChevronUpDownIcon className="h-4 w-4 text-brand-champagne/70" aria-hidden="true" />
                 </span>
               </button>
-              
               {eventTypeOpen && (
                 <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-md bg-brand-midnight-blue shadow-lg">
                   <ul className="py-1 text-sm">
                     {eventTypes.map((type, index) => (
                       <li
                         key={index}
-                        className={`relative cursor-default select-none py-2 pl-8 pr-4 hover:bg-brand-midnight/40 hover:text-brand-gold text-brand-champagne`}
+                        className={`relative cursor-default select-none py-3 sm:py-2 pl-8 pr-4 hover:bg-brand-midnight/40 hover:text-brand-gold text-brand-champagne touch-target`}
                         onClick={() => {
                           handleEventTypeChange(type);
                           setEventTypeOpen(false);
@@ -235,14 +308,15 @@ const SimpleContactForm: React.FC = () => {
             onChange={handleChange}
             aria-invalid={!!errors.message}
             aria-describedby={errors.message ? "message-error" : undefined}
-            className={`mt-1 block w-full px-3 py-2 bg-white/5 border border-brand-champagne/30 rounded-md shadow-sm text-brand-champagne placeholder-brand-champagne/60 focus:outline-none focus:ring-2 sm:text-sm
-                        ${errors.message ? 'border-red-500 ring-red-500' : 'focus:ring-brand-gold focus:border-brand-gold'}`}
+            className={`mt-1 block w-full px-3 py-3 sm:py-2 bg-white/5 border border-brand-champagne/30 rounded-md shadow-sm text-brand-champagne placeholder-brand-champagne/60 focus:outline-none focus:ring-2 sm:text-sm touch-target ${
+              errors.message ? 'border-red-500 ring-red-500' : 'focus:ring-brand-gold focus:border-brand-gold'
+            }`}
             placeholder="Your message..."
           ></textarea>
           {errors.message && <p id="message-error" className="mt-1 text-xs text-red-400">{errors.message}</p>}
         </div>
-        <div className="flex justify-center mt-8">
-          <Button type="submit" variant="primary" className="px-8 py-3" disabled={isSubmitting}>
+        <div className="flex justify-center mt-6 sm:mt-8">
+          <Button type="submit" variant="primary" className="w-full sm:w-auto px-8 py-3 min-h-[44px] touch-target" disabled={isSubmitting}>
             {isSubmitting ? 'Sending...' : 'Send Message'}
           </Button>
         </div>

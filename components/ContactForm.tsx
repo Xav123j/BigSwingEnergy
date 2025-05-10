@@ -44,10 +44,12 @@ const ContactForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log('Form submission started');
     setErrors({});
 
     const validationResult = ContactFormSchema.safeParse(formData);
     if (!validationResult.success) {
+      console.log('Form validation failed:', validationResult.error.errors);
       const fieldErrors: FormErrors = {};
       (validationResult.error as ZodError).errors.forEach((err: ZodIssue) => {
         if (err.path[0]) {
@@ -57,10 +59,17 @@ const ContactForm: React.FC = () => {
       setErrors(fieldErrors);
       return;
     }
-
+    
+    console.log('Form data validated successfully:', validationResult.data);
     setIsSubmitting(true);
+    
     try {
-      const response = await fetch('/api/contact', {
+      console.log('Sending form data to API...');
+      // Use Firebase Function URL instead of Next.js API route
+      const apiUrl = 'https://us-central1-bigswingenergy-6630a.cloudfunctions.net/contactForm';
+      console.log('Using API URL:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,19 +77,51 @@ const ContactForm: React.FC = () => {
         body: JSON.stringify(validationResult.data),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Something went wrong');
+      console.log('API response status:', response.status);
+      
+      // Check response type and handle non-JSON responses
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("Received non-JSON response:", await response.text());
+        throw new Error("Server returned non-JSON response. Check server logs.");
       }
       
-      setToast({ show: true, message: 'Message sent successfully! We will be in touch soon.', type: 'success' });
+      const responseData = await response.json();
+      console.log('API response data:', responseData);
+
+      if (!response.ok) {
+        console.error('API error response:', responseData);
+        throw new Error(responseData.message || 'Something went wrong');
+      }
+      
+      // Success handling with debug info if available
+      console.log('Form submission successful:', responseData);
+      const debugInfo = responseData.debug ? 
+        `\n[Debug: Email sent to ${responseData.debug.to} at ${responseData.debug.timestamp}]` : '';
+      
+      setToast({ 
+        show: true, 
+        message: `Message sent successfully! We will be in touch soon.${process.env.NODE_ENV === 'development' ? debugInfo : ''}`, 
+        type: 'success' 
+      });
       setFormData({ name: '', email: '', message: '' });
       setErrors({});
     } catch (error: any) {
-      console.error('Submission Error:', error);
-      setToast({ show: true, message: error.message || 'Failed to send message. Please try again.', type: 'error' });
+      console.error('Form submission error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
+      setToast({ 
+        show: true, 
+        message: `${error.message || 'Failed to send message. Please try again.'} ${error.debug ? `\n[Debug: ${error.debug.errorMessage}]` : ''}`, 
+        type: 'error' 
+      });
     } finally {
       setIsSubmitting(false);
+      console.log('Form submission process completed');
     }
   };
 
