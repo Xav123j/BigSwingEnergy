@@ -1,68 +1,35 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from './ui/Button';
-import MuteButton from './ui/MuteButton';
 import Image from 'next/image';
-import { useAudioManager } from '@/context/AudioManager';
+import dynamic from 'next/dynamic';
+
+// Dynamically import HeroVideo, ensuring it only loads on client-side and shows no loading indicator.
+const HeroVideo = dynamic(() => import('./HeroVideo'), { 
+  ssr: false, 
+  loading: () => null // As per instruction: loading:()=><></>
+});
 
 const Hero: React.FC = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isMuted, setIsMuted] = useState(true); // Default to muted for autoplay
-  const [videoIsReady, setVideoIsReady] = useState(false);
-  const { registerMediaElement, unregisterMediaElement } = useAudioManager();
-  
-  // State to determine if we should attempt to show/play video (for SSR and initial load)
-  // We can rely on CSS to hide it initially if needed, or use this state.
-  // For now, let's assume we always try to render the video tag.
-  const [isClient, setIsClient] = useState(false);
-  
-  const heroVideoSrc = '/videos/hero-compressed-hd1.mp4';
-  const heroPosterFallbackSrc = '/images/hero-poster.jpg';
+  const [loadVideo, setLoadVideo] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); // Set isClient to true once component mounts
-  }, []);
-
-  // This useEffect now handles video setup for both mobile and desktop
-  useEffect(() => {
-    if (!videoRef.current) return;
-
-    videoRef.current.muted = isMuted; // Ensure video respects the isMuted state
-    registerMediaElement('hero-video', videoRef.current);
-    
-    // Attempt to play the video
-    const playPromise = videoRef.current.play();
-    if (playPromise !== undefined) {
-      playPromise.then(_ => {
-        // Autoplay started!
-        setVideoIsReady(true);
-        console.log("Hero video autoplay started.");
-      }).catch(error => {
-        // Autoplay was prevented.
-        console.warn('Hero video autoplay was prevented:', error);
-        // Show video poster or a fallback if play fails, videoIsReady can still be true to show the element
-        setVideoIsReady(true); 
+    // Use requestIdleCallback to delay loading the video component
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => {
+        setLoadVideo(true);
       });
     } else {
-      // If play() doesn't return a promise (older browsers), assume it worked or will show via attributes
-      setVideoIsReady(true);
+      // Fallback for browsers that don't support requestIdleCallback
+      // Load it after a short delay to allow critical content to render first
+      const timer = setTimeout(() => {
+        setLoadVideo(true);
+      }, 200); // 200ms delay as a fallback
+      return () => clearTimeout(timer);
     }
-    
-    return () => {
-      unregisterMediaElement('hero-video');
-    };
-  }, [isMuted, registerMediaElement, unregisterMediaElement, isClient]); // Added isClient to re-run when it becomes true
+  }, []);
   
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted; // Directly apply to video element
-    }
-  };
-  
-  // Use a simpler approach for background: video will overlay it.
-  // The poster attribute on the video tag will serve as the initial background.
   const sectionStyle = {
     backgroundColor: '#000000', // Base background color
   };
@@ -73,44 +40,32 @@ const Hero: React.FC = () => {
       style={sectionStyle}
       id="Hero"
     >
-      {/* Video is now always rendered, relies on attributes and play() attempt */}
-      {isClient && ( // Only render video tag on the client to avoid hydration mismatches with videoRef
-        <video
-          ref={videoRef}
-          src={heroVideoSrc}
-          className={`absolute top-0 left-0 w-full h-full object-cover z-[1] transition-opacity duration-500 ${videoIsReady ? 'opacity-100' : 'opacity-0'}`}
-          autoPlay
-          loop
-          muted // Start muted for autoplay to work on mobile
-          playsInline // Essential for mobile autoplay
-          preload="auto"
-          poster={heroPosterFallbackSrc} // Shows while video loads or if it fails
-          onLoadedData={() => {
-            // setVideoIsReady(true); // Play attempt in useEffect will set this
-            console.log("Hero video onLoadedData triggered");
-          }}
-          onCanPlay={() => {
-             console.log("Hero video onCanPlay triggered, attempting play if not already.");
-             if (videoRef.current && videoRef.current.paused && !videoIsReady) {
-                // Fallback play attempt if initial one in useEffect was too early
-                videoRef.current.play().then(() => setVideoIsReady(true)).catch(e => console.warn("onCanPlay play() failed", e));
-             }
-          }}
-        />
-      )}
+      {/* Static placeholder image - visible by default and prioritized */}
+      <Image
+        src="/assets/og/bigswingenergy-hero.webp" // Path to the new WebP still
+        alt="Big Swing Energy band performing on stage" // Descriptive alt text
+        layout="fill"
+        objectFit="cover"
+        priority // Critical above-the-fold image
+        className="absolute top-0 left-0 w-full h-full object-cover z-[1]" 
+      />
+      
+      {/* Lazy-loaded video component */}
+      {loadVideo && <HeroVideo />}
       
       {/* Overlay */}
+      {/* WCAG Contrast: Consider increasing opacity if text contrast over video is an issue, e.g., bg-black/30 or bg-black/40, or add text shadow to text elements. */}
       <div className="absolute inset-0 bg-black z-[2] opacity-15"></div>
       
       {/* Content */}
       <div className="relative z-[3] p-1 md:p-4 flex flex-col items-center justify-center w-full max-w-3xl mt-8 md:mt-16 px-4 sm:px-6">
         <div className="w-full flex justify-center mb-0">
           <Image
-            src="/images/image_logo.png"
-            alt="Big Swing Energy"
+            src="/images/image_logo.webp" // This will be converted to WebP in a later step
+            alt="Big Swing Energy band logo"
             width={800}
             height={300}
-            priority
+            priority // This logo is also critical above the fold
             className="w-auto h-auto max-h-[130px] sm:max-h-[200px] md:max-h-[250px] lg:max-h-[300px]"
           />
         </div>
@@ -131,15 +86,7 @@ const Hero: React.FC = () => {
         </Button>
       </div>
 
-      {/* Mute button can be shown on both mobile and desktop if desired, or kept desktop only */}
-      {/* For now, let's assume videoIsReady implies we can show mute button */}
-      {videoIsReady && (
-        <MuteButton 
-          isMuted={isMuted}
-          toggleMute={toggleMute} 
-          className="fixed z-50 bottom-20 md:bottom-4 left-4 md:left-6"
-        />
-      )}
+      {/* MuteButton is now part of HeroVideo component and will be rendered there if video loads */}
     </section>
   );
 };

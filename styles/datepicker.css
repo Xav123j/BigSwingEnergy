@@ -88,4 +88,76 @@
 .react-datepicker__year-select option {
   background-color: #0b0e1a;
   color: var(--brand-champagne);
+}
+
+/* Square, left-aligned calendar popup for contact form */
+.datepicker-popper-large {
+  left: 0 !important;
+  transform: none !important;
+  width: 320px !important; /* Fixed square width */
+  height: 320px !important; /* Fixed square height */
+  box-sizing: border-box !important;
+}
+
+.datepicker-popper-large .react-datepicker {
+  width: 100% !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  display: flex !important; 
+  flex-direction: column !important;
+  font-size: 0.9rem !important; /* General font size for this instance */
+  box-sizing: border-box !important;
+}
+
+.datepicker-popper-large .react-datepicker__month-container {
+  flex-grow: 1 !important;
+  width: 100% !important;
+  /* overflow: hidden; */ /* Parent .react-datepicker handles scroll */
+  box-sizing: border-box !important;
+}
+
+.datepicker-popper-large .react-datepicker__header,
+.datepicker-popper-large .react-datepicker__today-button {
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.datepicker-popper-large .react-datepicker__today-button {
+  padding: 0.4rem !important;
+  font-size: 0.75rem !important;
+  align-self: center !important;
+  width: auto !important;
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.datepicker-popper-large .react-datepicker__month {
+  margin: 0.25rem auto !important; 
+  box-sizing: border-box !important;
+  /* Removed complex flex styling - let library defaults work */
+}
+
+.datepicker-popper-large .react-datepicker__week {
+ /* Removed complex flex styling - let library defaults work */
+}
+
+.datepicker-popper-large .react-datepicker__day-name,
+.datepicker-popper-large .react-datepicker__day {
+  width: 2.3rem !important;  
+  height: 2.3rem !important; 
+  line-height: 2.3rem !important;
+  margin: 0.1rem !important; 
+  display: inline-flex !important; 
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 3px !important;
+  box-sizing: border-box !important;
+}
+
+/* Force placeholder padding for DatePicker in the large popper context */
+.datepicker-popper-large + .react-datepicker-wrapper input[type="text"]::placeholder,
+/* General DatePicker input placeholder if needed, ensure specificity */
+.react-datepicker-wrapper input[type="text"]::placeholder {
+  text-indent: 0.25rem !important; /* Adjust this value to visually match px-3 */
+  /* We use text-indent as padding on ::placeholder can be inconsistent */
 } 

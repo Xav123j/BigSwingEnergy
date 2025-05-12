@@ -1,7 +1,7 @@
 import React from 'react';
 import SectionWrapper from '@/components/SectionWrapper';
 import Image from 'next/image'; 
-import storyPlaceholder from '@/public/images/BSE_LOGO_Horizontal3.png';
+import storyPlaceholder from '@/public/images/BSE_LOGO_Horizontal3.webp';
 
 const StorySection: React.FC = () => {
   return (

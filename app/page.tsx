@@ -1,34 +1,37 @@
-'use client';
+import { Metadata } from 'next';
+import HomeClient from './home-client'; // Import the new client component
 
-import React, { useEffect } from 'react';
-import Hero from '@/components/Hero';
-import StorySection from '@/components/sections/StorySection';
-// import GallerySection from '@/components/sections/GallerySection'; // Comment out the old import
-import GallerySectionDesktop from '@/components/sections/GallerySectionDesktop'; // Import the new Desktop version
-import GallerySectionMobile from '@/components/sections/GallerySectionMobile'; // Import the Mobile version
-// We will import GallerySectionMobile later when we implement the switcher
-import MusicVideos from '@/components/sections/MusicVideos';
-import SimpleContact from '@/components/sections/SimpleContact';
-import useIsMobile from '@/hooks/useIsMobile'; // Import the new hook
+// Metadata object remains here, as app/page.tsx is now a Server Component
+export const metadata: Metadata = {
+  title: "Big Swing Energy | Manchester Jazz Quartet — Live Band for Events", // ≤60 chars
+  description: "Book Big Swing Energy, Manchester's smoothest jazz quartet, for weddings, parties and corporate events. Timeless classics served with a twist.", // 120-155 chars
+  alternates: {
+    canonical: "https://bigswingenergy.com/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Big Swing Energy",
+    title: "Big Swing Energy | Manchester Jazz Quartet",
+    description: "Timeless swing classics re-spun. Book the quartet for unforgettable events.",
+    url: "https://bigswingenergy.com/",
+    images: [
+      {
+        url: "/assets/og/bigswingenergy-hero.webp",
+        width: 1200,
+        height: 630,
+        alt: "Big Swing Energy quartet performing live on stage",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Big Swing Energy | Manchester Jazz Quartet",
+    description: "Book Manchester's smoothest pour of jazz for your next event.",
+    images: ["/assets/og/bigswingenergy-hero.webp"],
+  },
+};
 
-export default function Home() {
-  const isMobile = useIsMobile(); // Use the hook to check screen size
-
-  useEffect(() => {
-    // Ensure the window is scrolled to the top right after the initial render.
-    // 'instant' behavior prevents any visual jump.
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    }
-  }, []); // Empty dependency array ensures this runs only once on mount.
-
-  return (
-    <>
-      <Hero />
-      <StorySection />
-      <MusicVideos />
-      {isMobile ? <GallerySectionMobile /> : <GallerySectionDesktop />}
-      <SimpleContact />
-    </>
-  );
+// This is now a Server Component
+export default function Page() {
+  return <HomeClient />;
 } 

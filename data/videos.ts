@@ -12,12 +12,48 @@ export interface VideoData {
 // Video data for the song list and player
 export const videos: VideoData[] = [
   {
+    id: 'sweetItIs',
+    title: 'How Sweet It Is (To Be Loved By You)',
+    artist: 'James Taylor',
+    runtime: '3:35',
+    mp4: '/videos/SWEET IT IS.mp4',
+    poster: '/videos/posters/SWEET IT IS-poster.webp',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/2Te1oU2Z-xM?si=J7SCt12lHOWD6HUj&controls=0'
+  },
+  {
+    id: 'love',
+    title: 'L-O-V-E',
+    artist: 'Nat King Cole',
+    runtime: '2:33',
+    mp4: '/videos/LOVE.mp4',
+    poster: '/videos/posters/LOVE-poster.webp',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/hMNo4EgF_B0?si=YHqA_Bd2S4sAH63K&controls=0'
+  },
+  {
+    id: 'ruleTheWorld',
+    title: 'Everybody Wants To Rule The World',
+    artist: 'Tears For Fears',
+    runtime: '4:11',
+    mp4: '/videos/RULE THE WORLD .mp4',
+    poster: '/videos/posters/RULE THE WORLD -poster.webp',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/8Ejz3_3zQQQ?si=nLG-0gWhBJKEYibE'
+  },
+  {
+    id: 'flyMeToTheMoon',
+    title: 'Fly Me To The Moon',
+    artist: 'Frank Sinatra',
+    runtime: '2:28',
+    mp4: '/videos/FLY ME TO THE MOON.mp4',
+    poster: '/videos/posters/FLY ME TO THE MOON-poster.webp',
+    youtubeEmbedSrc: 'https://www.youtube.com/embed/5QXxh07uAfU?si=Xye41b6ORgp5-FmM&controls=0'
+  },
+  {
     id: 'letItBe',
     title: 'LET IT BE',
     artist: 'The Beatles',
     runtime: '3:45',
     mp4: '/videos/LET IT BE.mp4',
-    poster: '/videos/posters/LET IT BE-poster.jpg',
+    poster: '/videos/posters/LET IT BE-poster.webp',
     youtubeEmbedSrc: 'https://www.youtube.com/embed/K1kVGz5XOhs?si=wsbjWjGaxDNvZaiG'
   },
   {
@@ -26,25 +62,17 @@ export const videos: VideoData[] = [
     artist: 'Seasonal',
     runtime: '2:56',
     mp4: '/videos/LET IT SNOW.mp4',
-    poster: '/videos/posters/LET IT SNOW-poster.jpg',
+    poster: '/videos/posters/LET IT SNOW-poster.webp',
     youtubeEmbedSrc: 'https://www.youtube.com/embed/LP2ewrEjUHw?si=sSgyvQXJ-C3K0Y87'
   },
-  {
-    id: 'love',
-    title: 'L-O-V-E',
-    artist: 'Nat King Cole',
-    runtime: '2:33',
-    mp4: '/videos/LOVE.mp4',
-    poster: '/videos/posters/LOVE-poster.jpg',
-    youtubeEmbedSrc: 'https://www.youtube.com/embed/hMNo4EgF_B0?si=YHqA_Bd2S4sAH63K&controls=0'
-  },
+  
   {
     id: 'makeMyDreams',
     title: 'MAKE MY DREAMS',
     artist: 'Hall & Oates',
     runtime: '3:12',
     mp4: '/videos/MAKE MY DREAMS .mp4',
-    poster: '/videos/posters/MAKE MY DREAMS -poster.jpg',
+    poster: '/videos/posters/MAKE MY DREAMS -poster.webp',
     youtubeEmbedSrc: 'https://www.youtube.com/embed/NDif-Vck58E?si=uvHyndX_TyzrMOLN'
   },
   {
@@ -53,17 +81,8 @@ export const videos: VideoData[] = [
     artist: 'Brenda Lee',
     runtime: '2:05',
     mp4: '/videos/ROCKING CRIMBO TREE .mp4',
-    poster: '/videos/posters/ROCKING CRIMBO TREE -poster.jpg',
+    poster: '/videos/posters/ROCKING CRIMBO TREE -poster.webp',
     youtubeEmbedSrc: 'https://www.youtube.com/embed/JDVWLeSNGfk?si=NtoRezEW4exl-zgo&controls=0'
-  },
-  {
-    id: 'ruleTheWorld',
-    title: 'Everybody Wants To Rule The World',
-    artist: 'Tears For Fears',
-    runtime: '4:11',
-    mp4: '/videos/RULE THE WORLD .mp4',
-    poster: '/videos/posters/RULE THE WORLD -poster.jpg',
-    youtubeEmbedSrc: 'https://www.youtube.com/embed/8Ejz3_3zQQQ?si=nLG-0gWhBJKEYibE'
   },
   {
     id: 'sway',
@@ -71,17 +90,8 @@ export const videos: VideoData[] = [
     artist: 'Dean Martin',
     runtime: '2:41',
     mp4: '/videos/SWAY.mp4',
-    poster: '/videos/posters/SWAY-poster.jpg',
+    poster: '/videos/posters/SWAY-poster.webp',
     youtubeEmbedSrc: 'https://www.youtube.com/embed/Cd6NCDlybtE?si=wqayLGPk-5vfFCQp'
-  },
-  {
-    id: 'sweetItIs',
-    title: 'How Sweet It Is (To Be Loved By You)',
-    artist: 'James Taylor',
-    runtime: '3:35',
-    mp4: '/videos/SWEET IT IS.mp4',
-    poster: '/videos/posters/SWEET IT IS-poster.jpg',
-    youtubeEmbedSrc: 'https://www.youtube.com/embed/2Te1oU2Z-xM?si=J7SCt12lHOWD6HUj&controls=0'
   },
   {
     id: 'theseAreTheDays',
@@ -89,17 +99,8 @@ export const videos: VideoData[] = [
     artist: 'Van Morrison',
     runtime: '3:58',
     mp4: '/videos/THESE ARE THE DAYS .mp4',
-    poster: '/videos/posters/THESE ARE THE DAYS -poster.jpg',
+    poster: '/videos/posters/THESE ARE THE DAYS -poster.webp',
     youtubeEmbedSrc: 'https://www.youtube.com/embed/KyJoaabwMgw?si=OxnFHQBRBhfN3VoE'
-  },
-  {
-    id: 'flyMeToTheMoon',
-    title: 'Fly Me To The Moon',
-    artist: 'Frank Sinatra',
-    runtime: '2:28',
-    mp4: '/videos/FLY ME TO THE MOON.mp4',
-    poster: '/videos/posters/FLY ME TO THE MOON-poster.jpg',
-    youtubeEmbedSrc: 'https://www.youtube.com/embed/5QXxh07uAfU?si=Xye41b6ORgp5-FmM&controls=0'
   },
   {
     id: 'hallelujahILoveHerSo',
@@ -107,7 +108,7 @@ export const videos: VideoData[] = [
     artist: 'Ray Charles',
     runtime: '2:38',
     mp4: '/videos/HALLELUJAH I LOVE HER SO.mp4',
-    poster: '/videos/posters/HALLELUJAH I LOVE HER SO-poster.jpg',
+    poster: '/videos/posters/HALLELUJAH I LOVE HER SO-poster.webp',
     youtubeEmbedSrc: 'https://www.youtube.com/embed/cFvZRj4l_20?si=YgmY6ksygNw5ULxZ&controls=0'
   },
   {
@@ -116,7 +117,7 @@ export const videos: VideoData[] = [
     artist: 'Toto',
     runtime: '3:56',
     mp4: '/videos/HOLD THE LINE.mp4',
-    poster: '/videos/posters/HOLD THE LINE-poster.jpg',
+    poster: '/videos/posters/HOLD THE LINE-poster.webp',
     youtubeEmbedSrc: 'https://www.youtube.com/embed/f9PNiNin5Ak?si=iVv7F_AQhawAoqOF&controls=0'
   },
 ]; 

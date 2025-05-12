@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Button from './ui/Button';
-import logoImage from '@/public/images/BSE_LOGO_CIRCULAR.png';
+import logoImage from '@/public/images/BSE_LOGO_CIRCULAR.webp';
 import { Transition } from '@headlessui/react';
 
 interface NavLinkData {

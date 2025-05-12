@@ -8,23 +8,23 @@ import useAutoHorizontalScroll from '@/hooks/useAutoHorizontalScroll';
 
 // Slide 1: Mix performance with logo
 const galleryItems = [
-  { src: '/images/1.jpg', alt: 'These Are The Days', colSpan: 'md:col-span-2', objectPosition: 'center 50%' },
-  { src: '/images/7.jpg', alt: 'Rule The World', rowSpan: 'md:row-span-2', objectPosition: '70% center' },
-  { src: '/images/15.jpg', alt: 'BSE Logo Circular', colSpan: 'md:col-span-1', objectPosition: 'center center' },
+  { src: '/images/1.webp', alt: 'These Are The Days', colSpan: 'md:col-span-2', objectPosition: 'center 50%' },
+  { src: '/images/7.webp', alt: 'Rule The World', rowSpan: 'md:row-span-2', objectPosition: '70% center' },
+  { src: '/images/15.webp', alt: 'BSE Logo Circular', colSpan: 'md:col-span-1', objectPosition: 'center center' },
 ];
 
 // Slide 2: Different mix
 const galleryItems2 = [
-  { src: '/images/2.jpg', alt: 'The band interacting with the audience', colSpan: 'md:col-span-2', objectPosition: 'center 40%' },
+  { src: '/images/2.webp', alt: 'The band interacting with the audience', colSpan: 'md:col-span-2', objectPosition: 'center 40%' },
   { 
-    src: '/images/6.jpg', 
+    src: '/images/6.webp', 
     alt: 'Make My Dreams', 
     rowSpan: 'md:row-span-2', 
     objectPosition: 'center center',
     fullColor: true  // Flag to display in full color
   },
   { 
-    src: '/images/5.jpg', 
+    src: '/images/5.webp', 
     alt: 'Love performance', 
     colSpan: 'md:col-span-1', 
     objectPosition: 'center center',
@@ -36,24 +36,24 @@ const galleryItems2 = [
 
 // Slide 3: Another mix
 const galleryItems3 = [
-  { src: '/images/15.jpg', alt: 'Rocking Christmas Tree performance', colSpan: 'md:col-span-2', objectPosition: 'center center' },
-  { src: '/images/10.jpg', alt: 'Overhead shot of the quartet in action', rowSpan: 'md:row-span-2', objectPosition: 'center center' },
-  { src: '/images/17.jpg', alt: 'Rule The World performance', colSpan: 'md:col-span-1', objectPosition: 'center 70%' },
+  { src: '/images/15.webp', alt: 'Rocking Christmas Tree performance', colSpan: 'md:col-span-2', objectPosition: 'center center' },
+  { src: '/images/10.webp', alt: 'Overhead shot of the quartet in action', rowSpan: 'md:row-span-2', objectPosition: 'center center' },
+  { src: '/images/17.webp', alt: 'Rule The World performance', colSpan: 'md:col-span-1', objectPosition: 'center 70%' },
 ];
 
 // Images that were removed from the slides (to be used elsewhere)
 const extraImages = [
-  { src: '/images/4.jpg', alt: 'Rocking around the Christmas tree', objectPosition: 'center center' },
-  { src: '/images/8.jpg', alt: 'BSE Logo Horizontal', objectPosition: 'center center' },
-  { src: '/images/12.jpg', alt: 'Love snapshot', objectPosition: 'center center' },
+  { src: '/images/4.webp', alt: 'Rocking around the Christmas tree', objectPosition: 'center center' },
+  { src: '/images/8.webp', alt: 'BSE Logo Horizontal', objectPosition: 'center center' },
+  { src: '/images/12.webp', alt: 'Love snapshot', objectPosition: 'center center' },
 ];
 
 // Backup images in case the above fail to load
 const backupGalleryItems = [
-  { src: '/images/backup-1.jpg', alt: 'Jazz quartet performing on a dimly lit stage', colSpan: 'md:col-span-2' },
-  { src: '/images/backup-2.jpg', alt: 'Close-up of a saxophone player', rowSpan: 'md:row-span-2' },
-  { src: '/images/backup-3.jpg', alt: 'The band interacting with the audience', colSpan: 'md:col-span-1' },
-  { src: '/images/backup-4.jpg', alt: 'Overhead shot of the quartet in action', colSpan: 'md:col-span-2' },
+  { src: '/images/backup-1.webp', alt: 'Jazz quartet performing on a dimly lit stage', colSpan: 'md:col-span-2' },
+  { src: '/images/backup-2.webp', alt: 'Close-up of a saxophone player', rowSpan: 'md:row-span-2' },
+  { src: '/images/backup-3.webp', alt: 'The band interacting with the audience', colSpan: 'md:col-span-1' },
+  { src: '/images/backup-4.webp', alt: 'Overhead shot of the quartet in action', colSpan: 'md:col-span-2' },
 ];
 
 // Add consistent styling for all logo items
@@ -205,8 +205,8 @@ const GallerySectionDesktop: React.FC = () => {
               }}
               className="transform transition-transform duration-500 ease-in-out group-hover:scale-110 z-0"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              quality={85}
-              loading="eager"
+              quality={70}
+              loading="lazy"
             />
           ) : (
             <Image 
@@ -220,11 +220,10 @@ const GallerySectionDesktop: React.FC = () => {
               }}
               className="transform transition-transform duration-500 ease-in-out group-hover:scale-110 z-0"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              quality={85}
-              priority={index < 2}
+              quality={70}
               onError={() => handleImageError(index)}
               onLoad={() => handleImageLoad(index)}
-              loading="eager"
+              loading="lazy"
             />
           )}
         </div>
@@ -263,9 +262,8 @@ const GallerySectionDesktop: React.FC = () => {
             }}
             className={`transition-transform duration-500 ease-in-out z-0 ${isLogo(item.src, item) ? '' : 'group-hover:scale-110'} ${shouldKeepSquare(item) ? 'h-full w-full' : ''}`}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            quality={85}
-            priority={index < 2}
-            loading="eager"
+            quality={70}
+            loading="lazy"
             onError={() => console.error(`Error loading image in second gallery: ${item.src}`)}
           />
         </div>
@@ -299,9 +297,8 @@ const GallerySectionDesktop: React.FC = () => {
             }}
             className="transform transition-transform duration-500 ease-in-out group-hover:scale-110 z-0"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            quality={85}
-            priority={false}
-            loading="eager"
+            quality={70}
+            loading="lazy"
             onError={() => console.error(`Error loading image in third gallery: ${item.src}`)}
           />
         </div>

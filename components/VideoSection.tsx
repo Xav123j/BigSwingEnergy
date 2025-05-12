@@ -49,7 +49,7 @@ const VideoSection: React.FC = () => {
     >
       <div className="container mx-auto max-w-container text-center mb-12">
         <h2 className="text-4xl md:text-5xl font-serif text-brand-black mb-4">
-          {/* Live Performances */}
+          Live Performances
         </h2>
         <p className="text-lg text-brand-black/70 mb-6 max-w-2xl mx-auto font-sans">
         {/* Select from the list below. */}

@@ -16,14 +16,14 @@ const SimpleContact: React.FC = () => {
           Get in Touch
         </h2>
         <p className="text-sm sm:text-base text-brand-champagne/80 max-w-2xl mx-auto font-sans mb-2 text-balance">
-          Ready to make your event unforgettable?
+          
         </p>
         <p className="text-sm sm:text-base text-brand-champagne/80 max-w-2xl mx-auto font-sans text-balance">
           Fill out the form below, and we'll get back to you promptly to discuss your needs.
         </p>
       </div>
       
-      <div className="max-w-xl mx-auto mt-6 md:mt-8 px-4 sm:px-6 md:px-0">
+      <div className="max-w-7xl w-full mx-auto mt-6 md:mt-8 px-0">
         <div className="bg-black border border-brand-gold/30 rounded-lg p-4 sm:p-6 shadow-lg">
           <SimpleContactForm />
         </div>

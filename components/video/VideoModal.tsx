@@ -1,18 +1,113 @@
 'use client';
 
-import React, { Fragment, useRef, useEffect, useState } from 'react';
+import React, { Fragment, useRef, useEffect, useState, useCallback } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { useVideoContext } from '@/context/VideoContext';
 import CTAButton from '@/components/CTAButton';
 import { useAudioManager } from '@/context/AudioManager';
+import { videos, VideoData } from '@/data/videos';
+
+// TypeScript declaration for the YouTube Iframe API
+declare global {
+  interface Window {
+    YT: any; // You can replace 'any' with more specific types if you have them
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
 
 const VideoModal: React.FC = () => {
-  const { isModalOpen, setIsModalOpen, getCurrentVideo } = useVideoContext();
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const { isModalOpen, setIsModalOpen, getCurrentVideo, setCurrentVideoId } = useVideoContext();
+  const playerRef = useRef<any>(null); // For the YouTube player instance
   const currentVideo = getCurrentVideo();
   const [showCTA, setShowCTA] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { fadeOutAllExcept, restoreVolume } = useAudioManager();
+
+  const navigateVideo = useCallback((direction: 'next' | 'prev') => {
+    if (!currentVideo) return;
+    
+    const currentIndex = videos.findIndex(video => video.id === currentVideo.id);
+    if (currentIndex === -1) return; // Should not happen if currentVideo is valid
+
+    let newIndex;
+    if (direction === 'next') {
+      newIndex = (currentIndex + 1) % videos.length;
+    } else {
+      newIndex = (currentIndex - 1 + videos.length) % videos.length;
+    }
+    
+    const newVideoId = videos[newIndex]?.id;
+    if (newVideoId) {
+      setCurrentVideoId(newVideoId);
+    }
+  }, [currentVideo, setCurrentVideoId, videos]); // `videos` is stable from import
+
+  const onPlayerStateChange = useCallback((event: any) => {
+    // YT.PlayerState.ENDED is 0
+    if (event.data === 0) { 
+      navigateVideo('next');
+    }
+  }, [navigateVideo]);
+
+  const handleIframeLoad = useCallback(() => {
+    if (!isModalOpen || !currentVideo) {
+      return;
+    }
+
+    if (typeof window.YT === 'undefined' || typeof window.YT.Player === 'undefined') {
+      console.warn('YouTube API (window.YT) not available. Autoplay next video on end will not work until API loads.');
+      // Optionally, you could try to load the API script here if it's not present,
+      // but that adds complexity (e.g., ensuring it's loaded only once).
+      // For now, we assume it's loaded or will be soon.
+      return;
+    }
+
+    // Destroy existing player instance if any
+    if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+      try {
+        playerRef.current.destroy();
+      } catch (e) {
+        console.error("Error destroying previous player:", e);
+      }
+      playerRef.current = null;
+    }
+    
+    // Create new player instance
+    try {
+      // The iframe must have the ID 'youtube-player-modal'
+      playerRef.current = new window.YT.Player('youtube-player-modal', {
+        events: {
+          'onStateChange': onPlayerStateChange,
+        },
+      });
+    } catch (error) {
+      console.error("Error creating YouTube player:", error);
+    }
+  }, [isModalOpen, currentVideo, onPlayerStateChange]);
+  
+  // Effect to load the YouTube API script if not already present
+  // This runs once when the component mounts.
+  useEffect(() => {
+    const scriptId = 'youtube-iframe-api-script';
+    if (document.getElementById(scriptId)) {
+      return; // Script already added
+    }
+
+    if (typeof window.YT === 'undefined' || typeof window.YT.Player === 'undefined') {
+      const tag = document.createElement('script');
+      tag.id = scriptId;
+      tag.src = "https://www.youtube.com/iframe_api";
+      // The YouTube API script will automatically call `window.onYouTubeIframeAPIReady`
+      // when it's loaded and ready. `handleIframeLoad` checks for `window.YT` existence.
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      if (firstScriptTag && firstScriptTag.parentNode) {
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      } else {
+        // Fallback if no script tags are found (e.g., in a very minimal document)
+        document.head.appendChild(tag);
+      }
+    }
+  }, []);
 
   // Check if device is mobile with more strict criteria
   useEffect(() => {
@@ -148,16 +243,34 @@ const VideoModal: React.FC = () => {
 
   // Handle closing and pausing video
   useEffect(() => {
-    if (!isModalOpen && videoRef.current) {
-      videoRef.current.pause();
-    }
-    
-    // When modal closes, restore hero video audio if it's not muted
     if (!isModalOpen) {
+      // Destroy YouTube player when modal closes
+      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+        try {
+          playerRef.current.destroy();
+        } catch(e) {
+            console.error("Error destroying player on modal close:", e);
+        }
+        playerRef.current = null;
+      }
       // Restore hero video audio - assumes the video ID is 'hero-video' as registered in Hero.tsx
       restoreVolume('hero-video');
     }
   }, [isModalOpen, restoreVolume]);
+
+  // General cleanup effect for component unmount
+  useEffect(() => {
+    return () => {
+      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+        try {
+          playerRef.current.destroy();
+        } catch(e) {
+          console.error("Error destroying player on unmount:", e);
+        }
+        playerRef.current = null;
+      }
+    };
+  }, []);
 
   // Handle fading out hero video when modal opens
   useEffect(() => {
@@ -238,10 +351,37 @@ const VideoModal: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
+
+                  {/* Navigation arrows */}
+                  <div className="absolute inset-0 flex items-center justify-between px-9 pointer-events-none">
+                    <button
+                      type="button"
+                      className="rounded-full bg-black/80 hover:bg-brand-gold p-2 text-white hover:text-white border-[2px] border-brand-gold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold z-20 pointer-events-auto"
+                      onClick={() => navigateVideo('prev')}
+                      aria-label="Previous video"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="rounded-full bg-black/80 hover:bg-brand-gold p-2 text-white hover:text-white border-[2px] border-brand-gold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold z-20 pointer-events-auto"
+                      onClick={() => navigateVideo('next')}
+                      aria-label="Next video"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
                   
                   {/* Video player - takes maximum available space */}
                   <div className={`video-container w-full ${isMobile ? 'h-screen' : 'max-w-[85vw] aspect-video'} mx-auto ${isMobile ? '' : 'rounded-lg border-[3px] border-brand-gold'} shadow-2xl bg-black overflow-hidden relative`}>
                     <iframe
+                      id="youtube-player-modal"
+                      key={currentVideo.id}
                       src={getYouTubeEmbedUrl()}
                       title={currentVideo.title}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
@@ -250,8 +390,8 @@ const VideoModal: React.FC = () => {
                       frameBorder="0"
                       style={{ margin: 0, padding: 0 }}
                       onLoad={() => {
-                        // Ensure audio is faded out when iframe loads
                         fadeOutAllExcept(`modal-video-${currentVideo.id}`);
+                        handleIframeLoad();
                       }}
                     />
                   </div>

@@ -63,20 +63,15 @@ const SongRow: React.FC<SongRowProps> = ({ video, isActive = false, index }) => 
           </p>
         </div>
         
-        {/* Runtime */}
-        <div className="text-xs text-brand-black/50 ml-2 flex-shrink-0">
-          {video.runtime}
+        {/* Play icon - only visible on hover or active */}
+        <div className={`ml-2 transform transition-opacity ${
+          isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" 
+            className={`w-4 h-4 ${isActive ? 'text-brand-gold' : 'text-brand-black/70'}`}>
+            <path fillRule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clipRule="evenodd" />
+          </svg>
         </div>
-      </div>
-
-      {/* Play icon - only visible on hover or active */}
-      <div className={`ml-2 transform transition-opacity ${
-        isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-      }`}>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" 
-          className={`w-4 h-4 ${isActive ? 'text-brand-gold' : 'text-brand-black/70'}`}>
-          <path fillRule="evenodd" d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clipRule="evenodd" />
-        </svg>
       </div>
     </div>
   );

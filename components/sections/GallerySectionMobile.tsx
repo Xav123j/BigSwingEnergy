@@ -21,9 +21,9 @@ interface GalleryItem {
 
 // Slide 1: Mix performance with logo
 const galleryItems = [
-  { src: '/images/7.jpg', alt: 'These Are The Days', colSpan: 'md:col-span-2', objectPosition: 'center 30%' },
+  { src: '/images/7.webp', alt: 'These Are The Days', colSpan: 'md:col-span-2', objectPosition: 'center 30%' },
   { 
-    src: '/images/5.jpg', 
+    src: '/images/5.webp', 
     alt: 'Love performance', 
     colSpan: 'md:col-span-1', 
     objectPosition: 'center center',
@@ -32,7 +32,7 @@ const galleryItems = [
     scale: 0.9
   },
   { 
-    src: '/images/1.jpg', 
+    src: '/images/1.webp', 
     alt: 'Make My Dreams', 
     rowSpan: 'md:row-span-2', 
     objectPosition: 'center center',
@@ -42,31 +42,31 @@ const galleryItems = [
 
 // Slide 2: Different mix
 const galleryItems2 = [
-  { src: '/images/2.jpg', alt: 'The band interacting with the audience', colSpan: 'md:col-span-2', objectPosition: 'center 40%' },
+  { src: '/images/2.webp', alt: 'The band interacting with the audience', colSpan: 'md:col-span-2', objectPosition: 'center 40%' },
   { 
-    src: '/images/6.jpg', 
+    src: '/images/6.webp', 
     alt: 'Make My Dreams', 
     rowSpan: 'md:row-span-2', 
     objectPosition: 'center center',
     fullColor: true  // Flag to display in full color
   },
-  { src: '/images/15.jpg', alt: 'Rule The World', rowSpan: 'md:row-span-2', objectPosition: '70% center' },
+  { src: '/images/15.webp', alt: 'Rule The World', rowSpan: 'md:row-span-2', objectPosition: '70% center' },
   
 ];
 
 // Slide 3: Another mix
 const galleryItems3 = [
-  { src: '/images/17.jpg', alt: 'Rocking Christmas Tree performance', colSpan: 'md:col-span-2', objectPosition: 'center center' },
-  { src: '/images/10.jpg', alt: 'Overhead shot of the quartet in action', rowSpan: 'md:row-span-2', objectPosition: 'center center' },
-  { src: '/images/18.jpg', alt: 'Rule The World performance', colSpan: 'md:col-span-1', objectPosition: 'center 70%' },
+  { src: '/images/17.webp', alt: 'Rocking Christmas Tree performance', colSpan: 'md:col-span-2', objectPosition: 'center center' },
+  { src: '/images/10.webp', alt: 'Overhead shot of the quartet in action', rowSpan: 'md:row-span-2', objectPosition: 'center center' },
+  { src: '/images/18.webp', alt: 'Rule The World performance', colSpan: 'md:col-span-1', objectPosition: 'center 70%' },
 ];
 
 // Backup images in case the above fail to load
 const backupGalleryItems = [
-  { src: '/images/backup-1.jpg', alt: 'Jazz quartet performing on a dimly lit stage', colSpan: 'md:col-span-2' },
-  { src: '/images/backup-2.jpg', alt: 'Close-up of a saxophone player', rowSpan: 'md:row-span-2' },
-  { src: '/images/backup-3.jpg', alt: 'The band interacting with the audience', colSpan: 'md:col-span-1' },
-  { src: '/images/backup-4.jpg', alt: 'Overhead shot of the quartet in action', colSpan: 'md:col-span-2' },
+  { src: '/images/backup-1.webp', alt: 'Jazz quartet performing on a dimly lit stage', colSpan: 'md:col-span-2' },
+  { src: '/images/backup-2.webp', alt: 'Close-up of a saxophone player', rowSpan: 'md:row-span-2' },
+  { src: '/images/backup-3.webp', alt: 'The band interacting with the audience', colSpan: 'md:col-span-1' },
+  { src: '/images/backup-4.webp', alt: 'Overhead shot of the quartet in action', colSpan: 'md:col-span-2' },
 ];
 
 const GallerySectionMobile: React.FC = () => { // Renamed component
@@ -218,7 +218,7 @@ const GallerySectionMobile: React.FC = () => { // Renamed component
                 className={`transition-transform duration-500 ease-in-out z-0 ${isLogo(galleryItem.src, galleryItem) ? '' : 'group-hover:scale-110'} ${shouldKeepSquare(galleryItem) ? 'h-full w-full' : ''}`}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 quality={60}
-                loading="eager"
+                loading="lazy"
               />
             ) : (
               <Image 
@@ -236,10 +236,9 @@ const GallerySectionMobile: React.FC = () => { // Renamed component
                 }}
                 className={`transition-transform duration-500 ease-in-out z-0 ${isLogo(galleryItem.src, galleryItem) ? '' : 'group-hover:scale-110'} ${shouldKeepSquare(galleryItem) ? 'h-full w-full' : ''}`}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                quality={60} // Mobile quality
-                priority={index < 2} // Prioritize first few images for LCP on mobile
+                quality={60}
+                loading="lazy"
                 onError={() => handleImageError(index)}
-                loading="eager"
               />
             )}
           </div>
@@ -284,8 +283,7 @@ const GallerySectionMobile: React.FC = () => { // Renamed component
               className={`transition-transform duration-500 ease-in-out z-0 ${isLogo(galleryItem.src, galleryItem) ? '' : 'group-hover:scale-110'} ${shouldKeepSquare(galleryItem) ? 'h-full w-full' : ''}`}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               quality={60}
-              priority={index < 2}
-              loading="eager"
+              loading="lazy"
               onError={() => console.error(`Error loading image in second gallery: ${galleryItem.src}`)}
             />
           </div>
@@ -330,8 +328,7 @@ const GallerySectionMobile: React.FC = () => { // Renamed component
               className={`transition-transform duration-500 ease-in-out z-0 ${isLogo(galleryItem.src, galleryItem) ? '' : 'group-hover:scale-110'} ${shouldKeepSquare(galleryItem) ? 'h-full w-full' : ''}`}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               quality={60}
-              priority={false}
-              loading="eager"
+              loading="lazy"
               onError={() => console.error(`Error loading image in third gallery: ${galleryItem.src}`)}
             />
           </div>
